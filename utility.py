@@ -15,12 +15,12 @@ from constants import (
 
     DSATUR_FIRST_COLOR_ID, DSATUR_UNCOLORED_MARKER,
 
-    CLI_ERR_INVALID_SPEED_VALUE, CLI_ERR_MISSING_SPEED_VALUE, CLI_ERR_NONPOSITIVE_SPEED_VALUE,
-    CLI_ERR_UNKNOWN_ARGUMENT_PREFIX, CLI_SPEED_FLAG_LONG, CLI_SPEED_FLAG_SHORT, CLI_USAGE,
+    CLI_ERR_INVALID_PAUSE_VALUE, CLI_ERR_MISSING_PAUSE_VALUE, CLI_ERR_NONPOSITIVE_PAUSE_VALUE,
+    CLI_ERR_UNKNOWN_ARGUMENT_PREFIX, CLI_PAUSE_FLAG_LONG, CLI_PAUSE_FLAG_SHORT, CLI_USAGE,
     CLI_EXAMPLE_INVALID_ARGS,
 
     IO_FILE_NOT_FOUND_PREFIX, IO_FILE_READ_ENCODING, IO_INPUT_DEFAULT_EXTENSION, IO_INPUT_EXAMPLES_DIR_PATH,
-    IO_SELECTOR_FILE_BIPARTITE, IO_SELECTOR_FILE_CYCLE, IO_SELECTOR_FILE_WHEEL, IO_SELECTOR_FILE_PETERSON,
+    IO_SELECTOR_FILE_BIPARTITE, IO_SELECTOR_FILE_DENSE, IO_SELECTOR_FILE_WHEEL, IO_SELECTOR_FILE_PETERSON,
 
     UI_DRAW_EDGE_COLOR, UI_DRAW_EDGE_WIDTH, UI_DRAW_FONT_COLOR, UI_DRAW_FONT_WEIGHT,
     UI_DRAW_NODE_SIZE, UI_FIGURE_SIZE, UI_FRAME_TITLE_FONT_SIZE, UI_GRAPH_AXIS_INDEX,
@@ -40,7 +40,7 @@ from constants import (
     UI_SELECTOR_BTN_TOP, UI_SELECTOR_BTN_WIDTH, UI_ANIM_TIGHT_RECT, UI_COLOR_NAMES, 
     UI_PAUSE_BTN_H, UI_PAUSE_BTN_LABEL, UI_PAUSE_BTN_W, UI_PAUSE_BTN_X, UI_PAUSE_BTN_Y, 
     UI_RESUME_BTN_LABEL, UI_SELECTOR_BTN_X, UI_SELECTOR_FIGURE_SIZE, UI_SELECTOR_LABEL_BIPARTITE, 
-    UI_SELECTOR_LABEL_CYCLE, UI_SELECTOR_LABEL_WHEEL, UI_SELECTOR_LABEL_PETERSON, UI_SELECTOR_TITLE, 
+    UI_SELECTOR_LABEL_DENSE, UI_SELECTOR_LABEL_WHEEL, UI_SELECTOR_LABEL_PETERSON, UI_SELECTOR_TITLE, 
     UI_SELECTOR_TITLE_FONT_SIZE, UI_SELECTOR_TITLE_X, UI_SELECTOR_TITLE_Y,
 )
 
@@ -53,10 +53,10 @@ def parse_cli_args_wrapper(args: list[str]) -> tuple[str | None, float | None]:
         args (list[str]): List of CLI arguments (excluding script name).
 
     Returns:
-        tuple[str | None, float | None]: Parsed input file (or None if not provided) and speed in seconds per frame.
+        tuple[str | None, float | None]: Parsed input file (or None if not provided) and pause in seconds per frame.
     """
     try:
-        input_arg, speed = parse_cli_args(args)
+        input_arg, pause = parse_cli_args(args)
     except ValueError as exc:
         print(str(exc))
         print(CLI_EXAMPLE_INVALID_ARGS)
@@ -76,32 +76,32 @@ def parse_cli_args_wrapper(args: list[str]) -> tuple[str | None, float | None]:
             print(str(exc))
             return None, None
 
-    return input_path, speed
+    return input_path, pause
 
 def parse_cli_args(args: list[str]) -> tuple[str | None, float | None]:
-    """Parse CLI arguments for input file and speed, with error handling.
+    """Parse CLI arguments for input file and pause, with error handling.
 
     Args:
         args (list[str]): List of CLI arguments (excluding script name).
 
     Returns:
-        tuple[str | None, float | None]: Parsed input file (or None if not provided) and speed in seconds per frame.
+        tuple[str | None, float | None]: Parsed input file (or None if not provided) and pause in seconds per frame.
     """
     input_file: str | None = None
-    speed: float = APP_DEFAULT_FRAME_PAUSE_SECONDS
+    pause: float = APP_DEFAULT_FRAME_PAUSE_SECONDS
 
     idx: int = 0
     while idx < len(args):
         token: str = args[idx]
-        if token in {CLI_SPEED_FLAG_LONG, CLI_SPEED_FLAG_SHORT}:
+        if token in {CLI_PAUSE_FLAG_LONG, CLI_PAUSE_FLAG_SHORT}:
             if idx + 1 >= len(args):
-                raise ValueError(CLI_ERR_MISSING_SPEED_VALUE)
+                raise ValueError(CLI_ERR_MISSING_PAUSE_VALUE)
             try:
-                speed = float(args[idx + 1])
+                pause = float(args[idx + 1])
             except ValueError as exc:
-                raise ValueError(CLI_ERR_INVALID_SPEED_VALUE) from exc
-            if speed <= 0:
-                raise ValueError(CLI_ERR_NONPOSITIVE_SPEED_VALUE)
+                raise ValueError(CLI_ERR_INVALID_PAUSE_VALUE) from exc
+            if pause <= 0:
+                raise ValueError(CLI_ERR_NONPOSITIVE_PAUSE_VALUE)
             idx += 2
         elif token.startswith("-"):
             raise ValueError(f"{CLI_ERR_UNKNOWN_ARGUMENT_PREFIX}: {token}. {CLI_USAGE}")
@@ -111,7 +111,7 @@ def parse_cli_args(args: list[str]) -> tuple[str | None, float | None]:
             input_file = token
             idx += 1
 
-    return input_file, speed
+    return input_file, pause
 
 def choose_example_file() -> str | None:
     """Open clickable rectangle buttons and return selected input file path.
@@ -293,7 +293,7 @@ def resolve_input_file(file_path: str) -> str:
     raise FileNotFoundError(IO_FILE_NOT_FOUND_PREFIX + full_path)
 
 def validate(G: nx.Graph, color: dict[int, int]) -> bool:
-    """Return True if no adjacent vertices share the same color.
+    """Return True if no adjacent nodes share the same color.
 
     Args:
         G (nx.Graph): The NetworkX graph instance.
@@ -317,7 +317,7 @@ def animate_dsatur(
         G (nx.Graph): The NetworkX graph instance.
         steps (list[tuple[int, int, int]]): A list of tuples containing animation 
             history where each tuple represents: (node, assigned_color, saturation).
-        frame_pause_seconds (float, optional): Duration to pause on each frame. Defaults to 1.1.
+        frame_pause_seconds (float, optional): Duration to pause on each frame. Defaults to 1.
 
     Returns:
         bool: True if all iterations were rendered; False if interrupted.
@@ -381,7 +381,12 @@ def animate_dsatur(
         ax_info=ax_info,
         used_colors=used_colors,
     )
-    fig.tight_layout(rect=UI_ANIM_TIGHT_RECT)
+    fig.subplots_adjust(
+        left=UI_ANIM_TIGHT_RECT[0],
+        bottom=UI_ANIM_TIGHT_RECT[1],
+        right=UI_ANIM_TIGHT_RECT[2],
+        top=UI_ANIM_TIGHT_RECT[3],
+    )
 
     if not plt.fignum_exists(fig.number):
         return False
@@ -412,7 +417,12 @@ def animate_dsatur(
             selected_saturation=selected_saturation,
             used_colors=used_colors,
         )
-        fig.tight_layout(rect=UI_ANIM_TIGHT_RECT)
+        fig.subplots_adjust(
+            left=UI_ANIM_TIGHT_RECT[0],
+            bottom=UI_ANIM_TIGHT_RECT[1],
+            right=UI_ANIM_TIGHT_RECT[2],
+            top=UI_ANIM_TIGHT_RECT[3],
+        )
 
         if not plt.fignum_exists(fig.number):
             return False
@@ -517,7 +527,7 @@ def _draw_graph_frame(
         if c == DSATUR_UNCOLORED_MARKER:
             node_colors.append(UI_UNCOLORED_COLOR)
         else:
-            node_colors.append(UI_PALETTE[(c - DSATUR_FIRST_COLOR_ID) % len(UI_PALETTE)])
+            node_colors.append(_color_id_to_palette(c))
 
     nx.draw_networkx(
         G,
@@ -607,7 +617,7 @@ def _draw_info_panel(
     for c in sorted(used_colors):
         legend_handles.append(
             patches.Patch(
-                color=UI_PALETTE[(c - DSATUR_FIRST_COLOR_ID) % len(UI_PALETTE)],
+                color=_color_id_to_palette(c),
                 label=_color_id_to_name(c),
             )
         )
@@ -632,6 +642,16 @@ def _color_id_to_name(color_id: int) -> str:
     """
     return UI_COLOR_NAMES[(color_id - DSATUR_FIRST_COLOR_ID) % len(UI_COLOR_NAMES)]
 
+def _color_id_to_palette(color_id: int) -> str:
+    """Return the color code for a DSatur color integer ID.
+    
+    Args:
+        color_id (int): The integer ID of the color assigned by DSatur.
+
+    Returns:
+        str: The color code from the predefined palette.
+    """
+    return UI_PALETTE[(color_id - DSATUR_FIRST_COLOR_ID) % len(UI_PALETTE)]
 
 def _build_selector_pairs() -> list[tuple[str, str]]:
     """Return ordered (button_label, example_filename) pairs.
@@ -643,6 +663,6 @@ def _build_selector_pairs() -> list[tuple[str, str]]:
     return [
         (UI_SELECTOR_LABEL_WHEEL, IO_SELECTOR_FILE_WHEEL),
         (UI_SELECTOR_LABEL_BIPARTITE, IO_SELECTOR_FILE_BIPARTITE),
-        (UI_SELECTOR_LABEL_CYCLE, IO_SELECTOR_FILE_CYCLE),
         (UI_SELECTOR_LABEL_PETERSON, IO_SELECTOR_FILE_PETERSON),
+        (UI_SELECTOR_LABEL_DENSE, IO_SELECTOR_FILE_DENSE),
     ]

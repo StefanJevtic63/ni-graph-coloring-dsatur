@@ -4,7 +4,7 @@ from typing import Literal
 DSATUR_UNCOLORED_MARKER: int = -1
 DSATUR_FIRST_COLOR_ID: int = 1
 
-APP_DEFAULT_FRAME_PAUSE_SECONDS: float = 1.1
+APP_DEFAULT_FRAME_PAUSE_SECONDS: float = 1
 APP_EXIT_FAILURE_CODE: int = 1
 APP_SEPARATOR_WIDTH: int = 48
 APP_STATUS_SUCCESS_TEXT: str = "Graph was successfully colored"
@@ -15,22 +15,27 @@ IO_INPUT_DEFAULT_EXTENSION: str = ".txt"
 IO_FILE_READ_ENCODING: str = "utf-8"
 IO_FILE_NOT_FOUND_PREFIX: str = "Input file not found: "
 
-CLI_SPEED_FLAG_LONG: str = "--speed"
-CLI_SPEED_FLAG_SHORT: str = "-s"
-CLI_USAGE: str = "Usage: python main.py <input_file> [--speed <seconds>]"
-CLI_EXAMPLE_INVALID_ARGS: str = "Invalid arguments! Example: python main.py bipartite.txt --speed 0.6"
+CLI_PAUSE_FLAG_LONG: str = "--pause"
+CLI_PAUSE_FLAG_SHORT: str = "-p"
+CLI_USAGE: str = "Usage: python main.py <input_file> [--pause <seconds>]"
+CLI_EXAMPLE_INVALID_ARGS: str = "Invalid arguments! Example: python main.py bipartite.txt --pause 1"
 
-CLI_ERR_MISSING_SPEED_VALUE: str = "Missing value after --speed / -s."
-CLI_ERR_INVALID_SPEED_VALUE: str = "Speed must be a number, e.g., --speed 0.7"
-CLI_ERR_NONPOSITIVE_SPEED_VALUE: str = "Speed must be > 0 seconds per iteration."
+CLI_ERR_MISSING_PAUSE_VALUE: str = "Missing value after --pause / -p."
+CLI_ERR_INVALID_PAUSE_VALUE: str = "PAUSE must be a number, e.g., --pause 1"
+CLI_ERR_NONPOSITIVE_PAUSE_VALUE: str = "PAUSE must be > 0 seconds per iteration."
 CLI_ERR_UNKNOWN_ARGUMENT_PREFIX: str = "Unknown argument"
 
 UI_PALETTE: list[str] = [
     "#e6194b", "#3cb44b", "#4363d8", "#f58231",
     "#911eb4", "#42d4f4", "#f032e6", "#bfef45",
+    "#fabed4", "#469990", "#dcbeff", "#9a6324"
 ]
 
-UI_COLOR_NAMES: list[str] = ["Red", "Green", "Blue", "Orange", "Purple", "Cyan", "Magenta", "Yellow"]
+UI_COLOR_NAMES: list[str] = [
+    "Red", "Green", "Blue", "Orange", 
+    "Purple", "Cyan", "Magenta", "Yellow",
+    "Pink", "Teal", "Lavender", "Brown"
+]
 
 UI_UNCOLORED_COLOR: str = "#c7c7c7"
 UI_LAYOUT_SEED: int = 42
@@ -106,8 +111,8 @@ UI_SELECTOR_BTN_GAP: float = 0.05
 UI_SELECTOR_BTN_TOP: float = 0.72
 UI_SELECTOR_LABEL_WHEEL: str = "Wheel"
 UI_SELECTOR_LABEL_BIPARTITE: str = "Bipartite"
-UI_SELECTOR_LABEL_CYCLE: str = "Cycle"
 UI_SELECTOR_LABEL_PETERSON: str = "Peterson"
+UI_SELECTOR_LABEL_DENSE: str = "Dense"
 
 UI_PAUSE_BTN_X: float = 0.38
 UI_PAUSE_BTN_Y: float = 0.02
@@ -119,5 +124,5 @@ UI_ANIM_TIGHT_RECT: tuple[float, float, float, float] = (0.0, 0.12, 1.0, 1.0)
 
 IO_SELECTOR_FILE_WHEEL: str = "wheel.txt"
 IO_SELECTOR_FILE_BIPARTITE: str = "bipartite.txt"
-IO_SELECTOR_FILE_CYCLE: str = "cycle.txt"
 IO_SELECTOR_FILE_PETERSON: str = "peterson.txt"
+IO_SELECTOR_FILE_DENSE: str = "dense_mesh_12.txt"
