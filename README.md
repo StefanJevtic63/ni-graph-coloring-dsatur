@@ -1,5 +1,7 @@
 # Graph Coloring with DSatur heuristic
 
+![DSatur Visualization Demo](demo.mp4)
+
 This project is an interactive desktop application for the step-by-step visualization and demonstration of the graph coloring problem with **DSatur (Degree Saturation)** heuristic. The application allows users to visually track how the algorithm makes decisions based on node saturation degrees, featuring animation pausing capabilities and dynamic graph switching through a Graphical User Interface (GUI).
 
 ## Project Goal
@@ -7,6 +9,8 @@ This project is an interactive desktop application for the step-by-step visualiz
 The primary goal of this project is educational: to provide a visual breakdown of greedy heuristics. Instead of just displaying the final result, the application renders the real-time metrics that dictate the algorithm's next move (such as saturation degree and the remaining degree of uncolored nodes).
 
 This project was developed as part of the **Scientific Computing** course within the Master's program at the **Faculty of Mathematics, University of Belgrade**.
+
+If you want to see a comprehensive, step-by-step walkthrough of the application's features, check out the [Full HD Demo Video on YouTube](https://youtu.be/qkYS4qXn_UY).
 
 ---
 

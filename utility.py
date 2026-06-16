@@ -321,7 +321,7 @@ def animate_dsatur(
     Returns:
         bool: True if all iterations were rendered; False if interrupted.
     """
-    pos: dict[int, Any] = _choose_layout(G)
+    pos: dict[int, Any] = _choose_layout(G=G, title=title)
     nodes: list[int] = list(G.nodes())
 
     fig = plt.figure(figsize=UI_FIGURE_SIZE)
@@ -482,11 +482,12 @@ def _get_token_by_index(tokens: list[str], idx: int) -> tuple[int, int]:
     return token, idx
 
 
-def _choose_layout(G: nx.Graph) -> dict[Any, Any]:
-    """Choose an appropriate visual layout for the graph.
+def _choose_layout(G: nx.Graph, title: str = "") -> dict[Any, Any]:
+    """Choose an appropriate visual layout for the graph to minimize edge crossing.
 
     Args:
         G (nx.Graph): The NetworkX graph instance.
+        title (str): Title or filename of the graph to enable structural tuning.
 
     Returns:
         dict[Any, Any]: Positions of nodes mapped to coordinate pairs.
@@ -499,7 +500,37 @@ def _choose_layout(G: nx.Graph) -> dict[Any, Any]:
         except Exception as e:
             print(e)
             pass
-    return nx.spring_layout(G, seed=UI_LAYOUT_SEED)
+
+    clean_title: str = title.lower()
+    # A wheel graph looks optimal when the hub node is centered and rim nodes form a circle
+    if "wheel" in clean_title:
+        center_node: Any = max(G.nodes())
+        outer_nodes: list[Any] = [v for v in G.nodes() if v != center_node]
+        
+        # Concentric shells: the inner shell contains just the hub, the outer has the rim
+        shell_list: list[list[Any]] = [[center_node], outer_nodes]
+        return nx.shell_layout(G, nlist=shell_list)
+        
+    # The Petersen graph is clearest using a shell layout (an inner star within an outer pentagon)
+    if "petersen" in clean_title or "peterson" in clean_title:
+        if len(G.nodes()) == 10:
+            inner_star: list[int] = list(range(6, 11))
+            outer_pentagon: list[int] = list(range(1, 6))
+            petersen_shells: list[list[int]] = [inner_star, outer_pentagon]
+            return nx.shell_layout(G, nlist=petersen_shells)
+        return nx.kamada_kawai_layout(G)
+
+    # For highly dense graphs, a circular layout prevents edges from obscuring unrelated node labels
+    if "dense" in clean_title:
+        return nx.circular_layout(G)
+
+    # Kamada-Kawai optimizes edge lengths and crossing boundaries better than the Spring layout
+    try:
+        kamada_positions: dict[Any, Any] = nx.kamada_kawai_layout(G)
+        return kamada_positions
+    except Exception:
+        spring_positions: dict[Any, Any] = nx.spring_layout(G, seed=UI_LAYOUT_SEED)
+        return spring_positions
 
 def _draw_graph_frame(
     ax: Axes,
