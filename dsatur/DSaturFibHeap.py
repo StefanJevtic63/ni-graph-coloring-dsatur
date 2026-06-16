@@ -1,81 +1,110 @@
-"""DSatur implementation using a Fibonacci heap with lazy invalidation for priority tracking."""
+"""DSatur implementation using a Fibonacci heap with direct node mapping for O(n log n + m) complexity."""
 
 import networkx as nx
 from FibonacciHeap.FibonacciHeap import FibonacciHeap, Node
 
-from dsatur.DSaturHeapBase import DSaturHeapBase
+from dsatur.DSaturBase import DSaturBase
+from constants import DSATUR_UNCOLORED_MARKER
 
-
-class DSaturFibHeap(DSaturHeapBase):
-    """DSatur using FibonacciHeap class with lazy invalidation."""
+class DSaturFibHeap(DSaturBase):
+    """DSatur graph coloring solver using a FibonacciHeap with direct node pointer mapping.
+    
+    This implementation aims to achieve the theoretical time complexity of O(n log n + m)
+    by utilizing a lookup map to perform direct,
+    amortized O(1) decrease_key operations on mutated neighbor nodes.
+    """
 
     def __init__(self, G: nx.Graph) -> None:
-        """Initialize custom Fibonacci Heap instances and metadata structures.
+        """Initialize the Fibonacci Heap, core data structures, and the pointer lookup map.
 
         Args:
             G (nx.Graph): The input undirected graph to color.
-
-        Returns:
-            None
         """
         super().__init__(G)
         self.fib_heap: FibonacciHeap = FibonacciHeap()
+        
+        # Maps graph node ID to its corresponding Node object instance inside the heap
+        self.node_mapping: dict[int, Node] = {}
 
-    def _extract_payload(self, min_item: Node) -> tuple[int, int, int, int]:
-        """Extract tuple payload from FibonacciHeap Node.
-
-        Args:
-            min_item (Node): The node instance extracted from the heap.
-
-        Returns:
-            tuple[int, int, int, int]: The raw sorting tuple payload.
-        """
-        return min_item.key
-
-    def _push(self, payload: tuple[int, int, int, int]) -> None:
-        """Push payload as a Node into FibonacciHeap.
+    def _make_key(self, v: int) -> tuple[int, int]:
+        """Generate the sorting priority tuple key for a given node.
+        
+        The tuple is constructed as (-saturation, node_id).
+        Since the Fibonacci Heap is a min-heap, decrementing these components 
+        (i.e., when saturation increases) reduces the overall 
+        tuple value, making it naturally compatible with the decrease_key operation.
 
         Args:
-            payload (tuple[int, int, int, int]): The priority metadata context.
+            v (int): The target graph node ID.
 
         Returns:
-            None
+            tuple[int, int]: A priority payload tuple containing:
+                - Negative saturation degree (primary sorting key).
+                - The unique node ID (secondary key ensuring strict order).
         """
-        self.fib_heap.insert(Node(payload))
+        return (-self.saturation[v], v)
 
-    def _pop(self) -> tuple[int, int, int, int]:
-        """Pop minimum Node and return its tuple payload.
+    def _add_node_to_heap(self, v: int) -> None:
+        """Create a heap Node object instance, register its reference, and insert it.
+
+        Args:
+            v (int): The graph node ID to inject into the heap.
+        """
+        initial_key: tuple[int, int] = self._make_key(v)
+        node_obj: Node = Node(initial_key)
+        
+        self.node_mapping[v] = node_obj
+        self.fib_heap.insert(node_obj)
+
+    def _update_node_in_heap(self, v: int) -> None:
+        """Directly adjust an active node's structural priority using decrease_key.
+
+        Args:
+            v (int): The graph node ID whose priority needs updating.
+        """
+        node_obj: Node = self.node_mapping[v]
+        new_key: tuple[int, int] = self._make_key(v)
+        self.fib_heap.decrease_key(node_obj, new_key)
+
+    def _pop_min_node_id(self) -> int:
+        """Extract the minimum Node from the heap, unregister its reference, and return its ID.
 
         Returns:
-            tuple[int, int, int, int]: The priority metadata tuple payload.
+            int: The unique graph node ID tracking the highest priority.
 
         Raises:
-            IndexError: If an extraction is attempted on an empty heap.
+            IndexError: If an extraction is attempted on an empty heap structure.
         """
         min_node: Node | None = self.fib_heap.extract_min()
         if min_node is None:
             raise IndexError("Cannot pop from an empty FibonacciHeap.")
-        return self._extract_payload(min_node)
-
-    def _push_or_update(self, v: int) -> None:
-        """Increment version token and push updated node state to Fibonacci heap.
-
-        Args:
-            v (int): The node node ID.
-
+        
+        # The underlying key structure is a tuple: (-saturation, node_id)
+        payload: tuple[int, int] = min_node.key
+        node_id: int = payload[1]
+        
+        del self.node_mapping[node_id]
+        return node_id
+    
+    def solve(self) -> tuple[dict[int, int], list[tuple[int, int, int]]]:
+        """Run DSatur using direct priority updates.
+        
         Returns:
-            None
+            tuple[dict[int, int], list[tuple[int, int, int]]]: A tuple containing:
+                - A mapping of graph node IDs to their assigned colors.
+                - A chronological list of steps taken during the coloring process.
         """
-        self.node_version[v] += 1
-        token: int = self.node_version[v]
-        self._push(
-            (-self.saturation[v], -self.uncolored_deg[v], v, token),
-        )
+        for v in self.nodes:
+            self._add_node_to_heap(v)
 
-    def _pop_min_payload(self) -> tuple[int, int, int, int]:
-        """Pop the minimum item from the custom Fibonacci Heap instance wrapper.
+        while self.uncolored_nodes:
+            best_node = self._pop_min_node_id()
+            selected_color, _ = self._assign_smallest_available_color(best_node)
 
-        Returns:
-            tuple[int, int, int, int]: The raw sorting tuple payload.
-        """
-        return self._pop()
+            for neighbor in self.G.neighbors(best_node):
+                if self.color[neighbor] == DSATUR_UNCOLORED_MARKER:
+                    self._update_uncolored_neighbor(neighbor=neighbor, selected_color=selected_color)
+                    self._update_node_in_heap(neighbor)
+
+        return self.color, self.steps
+    
