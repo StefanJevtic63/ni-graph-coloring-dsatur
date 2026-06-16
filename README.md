@@ -4,7 +4,7 @@ This project is an interactive desktop application for the step-by-step visualiz
 
 ## Project Goal
 
-The primary goal of this project is educational: to provide a visual breakdown of greedy heuristics within graph theory. Instead of just displaying the final result, the application renders the real-time metrics that dictate the algorithm's next move (such as saturation degree and the remaining degree of uncolored nodes).
+The primary goal of this project is educational: to provide a visual breakdown of greedy heuristics. Instead of just displaying the final result, the application renders the real-time metrics that dictate the algorithm's next move (such as saturation degree and the remaining degree of uncolored nodes).
 
 This project was developed as part of the **Scientific Computing** course within the Master's program at the **Faculty of Mathematics, University of Belgrade**.
 
@@ -18,9 +18,9 @@ This project was developed as part of the **Scientific Computing** course within
 
 The repository includes three DSatur solver variants, all of which share the same graph metadata initialization and step recording logic from the common base class. By default, the application utilizes the `DSaturFibHeap` implementation for execution due to its superior theoretical complexity on sparse graphs.
 
-- **`DSaturStandard`**: the classic sequential version. At every step, it scans all currently uncolored nodes and selects the one with the highest saturation degree, using the remaining uncolored degree and the node id as tie-breakers. This is the simplest implementation and has $\mathcal{O}(n^2)$ time complexity.
+- **`DSaturStandard`**: the classic sequential version. At every step, it scans all currently uncolored nodes and selects the one with the highest saturation degree, using the remaining uncolored degree and the node ID as tie-breakers. This is the simplest implementation and has $\mathcal{O}(n^2)$ time complexity.
 - **`DSaturBinHeap`**: a heap-optimized version built on Python's `heapq` binary heap. It stores priorities as `(-saturation, -uncolored_degree, node_id, version_token)` and uses lazy invalidation so outdated heap entries can be ignored when they are popped. This reduces selection overhead to $\mathcal{O}(\log n)$ per update and gives an overall complexity of $\mathcal{O}((n + m) \log n)$.
-- **`DSaturFibHeap`**: a heap-optimized version backed by Python's `FibonacciHeap` package. It keeps a direct dictionary mapping (`node_mapping`) from graph node id to heap node object, enabling constant-time lookup of the corresponding heap entry before applying `decrease_key` updates. Priorities are stored as `(-saturation, node_id)`, and this implementation targets $\mathcal{O}(m + n \log n)$ behavior.
+- **`DSaturFibHeap`**: a heap-optimized version backed by Python's `FibonacciHeap` package. It keeps a direct dictionary mapping from the graph node ID to a heap node object, enabling constant-time lookup of the corresponding heap entry before applying `decrease_key` updates. Priorities are stored as `(-saturation, node_id)`, and this implementation targets $\mathcal{O}(m + n \log n)$ behavior.
 
 All variants use the same coloring rule: once a node is selected, it receives the smallest available color not used by its colored neighbors, and the saturation/remaining-degree information of its uncolored neighbors is updated immediately.
 
@@ -28,8 +28,8 @@ All variants use the same coloring rule: once a node is selected, it receives th
 
 1. **Initialization:** Initially, all nodes are uncolored, and their saturation degree is set to `0`.
 2. **Node Selection:** From the set of uncolored nodes, the algorithm selects the node with the **highest degree of saturation** (the number of unique colors used by its direct neighbors).
-   - *Tie-breaker in `DSaturStandard` and `DSaturBinHeap`:* if multiple nodes share the same saturation, the node with the **highest degree in the subgraph induced by remaining uncolored nodes** is preferred; if still tied, lower node id wins.
-   - *Tie-breaker in `DSaturFibHeap`:* priority is based on `(-saturation, node_id)`, so ties on saturation are broken directly by node id.
+   - *Tie-breaker in `DSaturStandard` and `DSaturBinHeap`:* if multiple nodes share the same saturation, the node with the **highest degree in the subgraph induced by remaining uncolored nodes** is preferred; if still tied, the node with the lowest ID is selected.
+   - *Tie-breaker in `DSaturFibHeap`:* priority is based on `(-saturation, node_id)`, so ties on saturation are broken directly by node ID.
 3. **Color Assignment:** The selected node is assigned the **lowest possible color ID** (e.g., 1, 2, 3...) that is not currently being used by any of its neighbors.
 4. **State Update:** For all uncolored neighbors of the newly colored node, the saturation degree is updated, and their remaining uncolored degree is decremented.
 5. **Termination:** Steps 2–4 repeat until all nodes in the graph are successfully colored.
