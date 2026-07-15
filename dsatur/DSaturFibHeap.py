@@ -14,13 +14,24 @@ class DSaturFibHeap(DSaturBase):
     amortized O(1) decrease_key operations on mutated neighbor nodes.
     """
 
-    def __init__(self, G: nx.Graph) -> None:
+    def __init__(
+        self, 
+        G: nx.Graph | None = None,
+        input_file_name: str | None = None
+    ) -> None:
         """Initialize the Fibonacci Heap, core data structures, and the pointer lookup map.
 
         Args:
-            G (nx.Graph): The input undirected graph to color.
+            G (nx.Graph | None): Optional. The input undirected graph to color.
+            input_file_name (str | None): Optional. The name of the input file from which the graph was read.
+
+        Returns:
+            None
         """
-        super().__init__(G)
+        if G is None:
+            return
+
+        super().__init__(G, input_file_name=input_file_name)
         self.fib_heap: FibonacciHeap = FibonacciHeap()
         
         # Maps graph node ID to its corresponding Node object instance inside the heap

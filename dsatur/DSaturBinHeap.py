@@ -9,16 +9,24 @@ from constants import DSATUR_UNCOLORED_MARKER
 class DSaturBinHeap(DSaturBase):
     """DSatur using binary heap with lazy invalidation."""
 
-    def __init__(self, G: nx.Graph) -> None:
+    def __init__(
+        self, 
+        G: nx.Graph | None = None,
+        input_file_name: str | None = None
+    ) -> None:
         """Initialize binary heap arrays and tracking metadata structures.
 
         Args:
-            G (nx.Graph): The input undirected graph to color.
+            G (nx.Graph | None): Optional. The input undirected graph to color.
+            input_file_name (str | None): Optional. The name of the input file from which the graph was read.
 
         Returns:
             None
         """
-        super().__init__(G)
+        if G is None:
+            return
+
+        super().__init__(G, input_file_name=input_file_name)
         self.heap: list[tuple[int, int, int, int]] = []
         self.node_version: dict[int, int] = {v: 0 for v in self.nodes}
 

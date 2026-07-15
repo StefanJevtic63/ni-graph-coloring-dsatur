@@ -18,7 +18,13 @@ Input format:
 
 import sys
 import networkx as nx
-from os import path
+from os import path, environ
+
+########################################################################################
+base_tcl_path = r"C:\Users\Stefan\AppData\Local\Programs\Python\Python313\tcl"
+environ["TCL_LIBRARY"] = path.join(base_tcl_path, "tcl8.6")
+environ["TK_LIBRARY"] = path.join(base_tcl_path, "tk8.6")
+#########################################################################################
 
 from dsatur.DSaturStandard import DSaturStandard
 from dsatur.DSaturBinHeap import DSaturBinHeap
@@ -92,7 +98,7 @@ def main() -> None:
         G: nx.Graph = read_graph_from_file(current_file) 
         
         # color, steps = dsatur(G)
-        #color, steps = dsatur_binary_heap(G)
+        # color, steps = dsatur_binary_heap(G)
         color, steps = dsatur_fibonacci_heap(G)
 
         completed: bool = animate_dsatur(
